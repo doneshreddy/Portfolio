@@ -1,48 +1,54 @@
+# Name of your workflow, visible in the GitHub Actions tab
 name: Deploy to GitHub Pages
 
-# Controls when the workflow will run
 on:
-  # Trigger the workflow on pushes to the 'main' branch
   push:
     branches:
-      - master # Change this to 'master' if your primary branch is 'master'
+      - master # Your code is here
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build-and-deploy"
-  build-and-deploy:
-    # The type of runner that the job will run on
+  # Job to build your site
+  build:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Step 1: Checkout the repository code
       - name: Checkout Repository 📚
-        uses: actions/checkout@v4 # Action to pull your code onto the runner
+        uses: actions/checkout@v4
 
-      # Step 2: Set up Node.js environment
       - name: Setup Node.js 🟩
-        uses: actions/setup-node@v4 # Action to set up Node.js for your project
+        uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify the Node.js version you use (e.g., '18', '20', '22')
-          cache: "npm" # Cache npm dependencies to speed up subsequent builds
+          node-version: '20' # Your preferred Node.js version
+          cache: 'npm'
 
-      # Step 3: Install project dependencies
       - name: Install Dependencies 📦
-        run: npm install # Runs 'npm install' in your project directory
+        run: npm install
 
-      # Step 4: Build your Vite project
       - name: Build Project 🏗️
-        run: npm run build # Runs 'npm run build' which executes 'vite build'
+        run: npm run build
 
-      # Step 5: Deploy the built project to GitHub Pages
-      - name: Deploy to GitHub Pages 🚀
-        uses: peaceiris/actions-gh-pages@v3 # A popular GitHub Action for deploying to GH Pages
+      # New Step: Upload the built site as an artifact
+      - name: Upload Pages artifact ⬆️
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided token for authentication
-          publish_dir: ./dist # The directory containing your built files (Vite's default)
-          # Uncomment the line below if you have a custom domain (e.g., 'www.yourwebsite.com')
-          # cname: 'www.your-custom-domain.com'
+          path: './dist' # The directory containing your built files (Vite's default)
+
+  # Job to deploy the artifact to GitHub Pages
+  deploy:
+    environment:
+      name: github-pages # This environment is automatically created by GitHub Pages
+      url: ${{ steps.deployment.outputs.page_url }} # The URL of your deployed site
+    runs-on: ubuntu-latest
+    needs: build # This job depends on the 'build' job completing successfully
+
+    # Permissions are crucial for the GITHUB_TOKEN to allow deployment
+    permissions:
+      pages: write   # Allows writing (deploying) to GitHub Pages
+      id-token: write # Required for secure authentication with OIDC
+
+    steps:
+      # New Step: Deploy the artifact to GitHub Pages
+      - name: Deploy to GitHub Pages 🚀
+        id: deployment
+        uses: actions/deploy-pages@v4 # GitHub's native action for deploying Pages artifacts
