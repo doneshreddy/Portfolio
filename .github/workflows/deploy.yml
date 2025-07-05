@@ -1,17 +1,28 @@
 # Name of your workflow, visible in the GitHub Actions tab
 name: Deploy to GitHub Pages
 
+# Controls when the workflow will run
 on:
+  # Trigger the workflow on pushes to the 'master' branch
   push:
     branches:
       - master # Your code is here
 
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # Job to build your site
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
+    # *** THIS IS THE CRUCIAL PART FOR PERMISSIONS ***
+    # Grant permissions for the GITHUB_TOKEN to write to the repository
+    permissions:
+      contents: write # Allows the bot to write (push) to the repository
+      pages: write    # Specifically allows writing to GitHub Pages
+      id-token: write # Required for secure authentication with OIDC
+
     steps:
       - name: Checkout Repository 📚
         uses: actions/checkout@v4
@@ -28,27 +39,11 @@ jobs:
       - name: Build Project 🏗️
         run: npm run build
 
-      # New Step: Upload the built site as an artifact
-      - name: Upload Pages artifact ⬆️
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist' # The directory containing your built files (Vite's default)
-
-  # Job to deploy the artifact to GitHub Pages
-  deploy:
-    environment:
-      name: github-pages # This environment is automatically created by GitHub Pages
-      url: ${{ steps.deployment.outputs.page_url }} # The URL of your deployed site
-    runs-on: ubuntu-latest
-    needs: build # This job depends on the 'build' job completing successfully
-
-    # Permissions are crucial for the GITHUB_TOKEN to allow deployment
-    permissions:
-      pages: write   # Allows writing (deploying) to GitHub Pages
-      id-token: write # Required for secure authentication with OIDC
-
-    steps:
-      # New Step: Deploy the artifact to GitHub Pages
+      # Step 5: Deploy the built project to GitHub Pages using peaceiris/actions-gh-pages
       - name: Deploy to GitHub Pages 🚀
-        id: deployment
-        uses: actions/deploy-pages@v4 # GitHub's native action for deploying Pages artifacts
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }} # Uses the auto-generated token
+          publish_dir: ./dist # The directory containing your built files (Vite's default)
+          # Make sure the cname line is commented out unless you actually use a custom domain
+          # cname: 'www.your-custom-domain.com'
