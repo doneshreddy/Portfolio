@@ -1,0 +1,48 @@
+name: Deploy to GitHub Pages
+
+# Controls when the workflow will run
+on:
+  # Trigger the workflow on pushes to the 'main' branch
+  push:
+    branches:
+      - master # Change this to 'master' if your primary branch is 'master'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build-and-deploy"
+  build-and-deploy:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout Repository 📚
+        uses: actions/checkout@v4 # Action to pull your code onto the runner
+
+      # Step 2: Set up Node.js environment
+      - name: Setup Node.js 🟩
+        uses: actions/setup-node@v4 # Action to set up Node.js for your project
+        with:
+          node-version: "20" # Specify the Node.js version you use (e.g., '18', '20', '22')
+          cache: "npm" # Cache npm dependencies to speed up subsequent builds
+
+      # Step 3: Install project dependencies
+      - name: Install Dependencies 📦
+        run: npm install # Runs 'npm install' in your project directory
+
+      # Step 4: Build your Vite project
+      - name: Build Project 🏗️
+        run: npm run build # Runs 'npm run build' which executes 'vite build'
+
+      # Step 5: Deploy the built project to GitHub Pages
+      - name: Deploy to GitHub Pages 🚀
+        uses: peaceiris/actions-gh-pages@v3 # A popular GitHub Action for deploying to GH Pages
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided token for authentication
+          publish_dir: ./dist # The directory containing your built files (Vite's default)
+          # Uncomment the line below if you have a custom domain (e.g., 'www.yourwebsite.com')
+          # cname: 'www.your-custom-domain.com'
